@@ -1,38 +1,53 @@
 const Posts = require('../posts/posts-model');
+const Users = require('../users/users-model');
 
 function logger(req, res, next) {
-  const requestLog = {
-    'Request Method': req.method,
-    'Request URL': req.originalUrl,
-    'Request time': new Date().toUTCString(),
-  };
-  console.log(requestLog);
+  console.log(
+    `Request Method: ${req.method} || Request URL: ${
+      req.originalUrl
+    } || Request time: ${new Date().toUTCString()}`,
+  );
+
   next();
 }
-function validateUser(req, res, next) {
-  // do your magic!
-}
 
-function validateUserId(req, res, next) {
-  // do your magic!
-}
+const validateUser = (req, res, next) => {
+  const emptyChecker = Object.keys(req.body);
 
-function validatePost(req, res, next) {
-  // do your magic!
-}
+  emptyChecker.length === 0
+    ? res.status(400).json({ message: 'missing user data' })
+    : !req.body.name
+    ? res.status(400).json({ message: 'missing required name field' })
+    : next();
+};
+
+const validateUserId = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    const user = await Users.getById(id);
+    !user
+      ? res.status(400).json({ message: 'User not found' })
+      : (req.user = user);
+    next();
+  } catch (e) {
+    res.status(500).json({ message: 'Server issue' });
+  }
+};
+
+function validatePost(req, res, next) {}
 
 const validatePostId = async (req, res, next) => {
   const { id } = req.params;
 
   try {
     const post = await Posts.getById(id);
-
     !post
-      ? res.status(400).json({ message: 'No post with that ID fool' })
+      ? res.status(400).json({ message: 'Post not found' })
       : (req.post = post);
     next();
   } catch (e) {
-    res.status(500).json({ message: 'Error you fool!' });
+    res.status(500).json({ message: 'Server issue' });
   }
 };
 
